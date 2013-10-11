@@ -1,0 +1,5 @@
+{
+  "basePath": "http://images.example.com",
+  "convertCommand": "/usr/bin/gm convert",
+  "port": 80
+}
