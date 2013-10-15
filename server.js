@@ -11,6 +11,11 @@ var fs = require('fs'),
     convertCommand = convertArguments.shift(),
     port = config.port;
 
+if (config.proxy) {
+    console.log('using proxy', config.proxy);
+    request = request.defaults({proxy: config.proxy});
+}
+
 app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
     var convertOptions = getConvertOptions(req.params[1]),
         relativePath = req.params[0] + req.params[2],

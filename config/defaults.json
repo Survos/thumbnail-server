@@ -4,5 +4,6 @@
   "port": 80,
   "group": "www-data",
   "user": "www-data",
-  "tempDir": "/tmp"
+  "tempDir": "/tmp",
+  "proxy": null
 }
