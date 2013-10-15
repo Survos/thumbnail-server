@@ -27,8 +27,14 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
         return;
     }
     r.on('response', function (remoteRes) {
-        var rawFile, convertedFile, stream;
+        var maxAge, m, rawFile, convertedFile, stream;
         if (remoteRes.statusCode === 200) {
+            if (m = remoteRes.headers['cache-control'] && remoteRes.headers['cache-control'].match(/\bmax-age=(\d+)\b/)) {
+                maxAge = m[1];
+            }
+            else {
+                maxAge = config.maxAge;
+            }
             rawFile = getTempFilename('raw');
             convertedFile = getTempFilename('converted');
             r.pipe(fs.createWriteStream(rawFile))
@@ -50,7 +56,9 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
                             return;
                         }
                         times.converted = Date.now();
-                        res.sendfile(convertedFile, function () {
+                        console.log('sending converted file with max age', maxAge);
+                        // sendfile() wants maxAge in milliseconds, not seconds:
+                        res.sendfile(convertedFile, {maxAge: maxAge * 1000}, function () {
                             var prevTime;
                             times.sent = Date.now();
                             _.each(times, function (t, name) {
