@@ -3,5 +3,6 @@
   "convertCommand": "/usr/bin/gm convert",
   "port": 80,
   "group": "www-data",
-  "user": "www-data"
+  "user": "www-data",
+  "tempDir": "/tmp"
 }

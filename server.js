@@ -24,8 +24,8 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
     r.on('response', function (remoteRes) {
         var rawFile, convertedFile, stream;
         if (remoteRes.statusCode === 200) {
-            rawFile = temp.path({prefix: 'thumbnail-raw-', suffix: '.jpg'});
-            convertedFile = temp.path({prefix: 'thumbnail-converted-', suffix: '.jpg'});
+            rawFile = getTempFilename('raw');
+            convertedFile = getTempFilename('converted');
             r.pipe(fs.createWriteStream(rawFile))
                 .on('error', function (err) {
                     console.log('stream error', err);
@@ -105,6 +105,14 @@ function getConvertOptions(optionsString) {
         options.push('-resize', params.w + 'x' + params.h);
     }
     return options;
+}
+
+function getTempFilename(options) {
+    if (typeof options == 'string') {
+        options = {prefix: 'thumbnail-' + options + '-'};
+    }
+    _.defaults(options, {dir: config.tempDir, suffix: '.jpg'});
+    return temp.path(options);
 }
 
 app.listen(port);
