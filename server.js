@@ -11,12 +11,6 @@ var fs = require('fs'),
     convertCommand = convertArguments.shift(),
     port = config.port;
 
-if (process.getuid() === 0) {
-    // If run as root (to use privileged port) then change to less privileged user
-    process.setgid(config.group);
-    process.setuid(config.user);
-}
-
 app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
     var convertOptions = getConvertOptions(req.params[1]),
         relativePath = req.params[0] + req.params[2],
@@ -115,3 +109,9 @@ function getConvertOptions(optionsString) {
 
 app.listen(port);
 console.log('listening on port', port);
+
+if (process.getuid() === 0) {
+    // If run as root (to use privileged port) then change to less privileged user
+    process.setgid(config.group);
+    process.setuid(config.user);
+}
