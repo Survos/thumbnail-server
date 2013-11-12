@@ -119,6 +119,7 @@ function getConvertOptions(optionsString) {
     if (params.w || params.h) {
         options.push('-resize', params.w + 'x' + params.h);
     }
+    options.push('+profile', '*'); // remove Exif/IPTC/etc. metadata to avoid rotation issues
     return options;
 }
 
