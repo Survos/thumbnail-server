@@ -21,12 +21,13 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
     var convertOptions = getConvertOptions(req.params[1]),
         relativePath = req.params[0] + req.params[2],
         source = basePath + relativePath,
-        r = request(source),
-        times = {start: Date.now()};
+        times = {start: Date.now()},
+        r;
     if (!convertOptions) {
         res.send(400);
         return;
     }
+    r = request(source);
     r.on('response', function (remoteRes) {
         var maxAge, m, rawFile, convertedFile, stream;
         if (remoteRes.statusCode === 200) {
