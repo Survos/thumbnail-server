@@ -88,10 +88,10 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
         }
         function cleanup() {
             console.log('deleting', rawFile);
-            fs.unlink(rawFile);
+            fs.unlink(rawFile, function () {});
             if (convertedFile) {
                 console.log('deleting', convertedFile);
-                fs.unlink(convertedFile);
+                fs.unlink(convertedFile, function () {});
             }
         }
     });
