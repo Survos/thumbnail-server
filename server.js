@@ -4,17 +4,22 @@ var fs = require('fs'),
     request = require('request'),
     _ = require('underscore'),
     temp = require('temp'),
+    async = require('async'),
     config = require('./config'),
     app = express(),
     basePath = config.basePath,
     convertArguments = config.convertCommand.split(/\s+/),
     convertCommand = convertArguments.shift(),
-    port = config.port;
+    port = config.port,
+    concurrency = config.concurrency || 1,
+    convertQueue;
 
 if (config.proxy) {
     console.log('using proxy', config.proxy);
     request = request.defaults({proxy: config.proxy});
 }
+
+convertQueue = async.queue(doConversion, concurrency);
 
 app.use(express.logger());
 app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
@@ -46,13 +51,15 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
                     cleanup();
                 })
                 .on('finish', function () {
-                    var args = convertArguments.concat(rawFile, convertOptions, convertedFile);
+                    var task = {
+                            rawFile: rawFile,
+                            convertOptions: convertOptions,
+                            convertedFile: convertedFile
+                        };
                     times.downloaded = Date.now();
                     console.log('%s written', rawFile);
-                    console.log(convertCommand, args.join(' '));
-                    execFile(convertCommand, args, function (err, stdout, stderr) {
+                    convertQueue.push(task, function (err) {
                         if (err) {
-                            console.log('convert error', err, stderr);
                             res.send(500);
                             cleanup();
                             return;
@@ -129,6 +136,17 @@ function getTempFilename(options) {
     }
     _.defaults(options, {dir: config.tempDir, suffix: '.jpg'});
     return temp.path(options);
+}
+
+function doConversion(task, callback) {
+    var args = convertArguments.concat(task.rawFile, task.convertOptions, task.convertedFile);
+    console.log(convertCommand, args.join(' '));
+    execFile(convertCommand, args, function (err, stdout, stderr) {
+        if (err) {
+            console.log('convert error', err, stderr);
+        }
+        callback(err);
+    });
 }
 
 app.listen(port);
