@@ -1,6 +1,7 @@
 {
   "basePath": "http://images.example.com",
   "convertCommand": "/usr/bin/gm convert",
+  "convertTimeout": 10,
   "port": 80,
   "group": "www-data",
   "user": "www-data",

@@ -11,6 +11,7 @@ var fs = require('fs'),
     convertArguments = config.convertCommand.split(/\s+/),
     convertCommand = convertArguments.shift(),
     port = config.port,
+    convertTimeout = config.convertTimeout * 1000,
     concurrency = config.concurrency || 1,
     convertQueue;
 
@@ -139,9 +140,10 @@ function getTempFilename(options) {
 }
 
 function doConversion(task, callback) {
-    var args = convertArguments.concat(task.rawFile, task.convertOptions, task.convertedFile);
+    var args = convertArguments.concat(task.rawFile, task.convertOptions, task.convertedFile),
+        execOptions = {timeout: convertTimeout};
     console.log(convertCommand, args.join(' '));
-    execFile(convertCommand, args, function (err, stdout, stderr) {
+    execFile(convertCommand, args, execOptions, function (err, stdout, stderr) {
         if (err) {
             console.log('convert error', err, stderr);
         }
