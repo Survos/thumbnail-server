@@ -123,7 +123,9 @@ function getConvertOptions(optionsString) {
         options.push('-crop', params.c);
     }
     if (params.r) {
-        options.push('-rotate', params.r);
+        if (+params.r) { // Don't bother with rotate if 0
+            options.push('-rotate', params.r);
+        }
     }
     if (params.w || params.h) {
         options.push('-resize', params.w + 'x' + params.h);
