@@ -55,7 +55,8 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
                     var task = {
                             rawFile: rawFile,
                             convertOptions: convertOptions,
-                            convertedFile: convertedFile
+                            convertedFile: convertedFile,
+                            times: times
                         };
                     times.downloaded = Date.now();
                     console.log('%s written', rawFile);
@@ -142,6 +143,7 @@ function getTempFilename(options) {
 function doConversion(task, callback) {
     var args = convertArguments.concat(task.rawFile, task.convertOptions, task.convertedFile),
         execOptions = {timeout: convertTimeout};
+    task.times.waiting = Date.now();
     console.log(convertCommand, args.join(' '));
     execFile(convertCommand, args, execOptions, function (err, stdout, stderr) {
         if (err) {
