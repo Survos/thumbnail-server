@@ -105,7 +105,7 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
 function getConvertOptions(optionsString) {
     var params = {w: '', h: ''},
         options = [],
-        m;
+        m, largerWidth, largerHeight;
     while (m = optionsString.match(/^([whr])(\d+)|^(c)(\d+x\d+\+\d+\+\d+)/)) {
         if (m[1]) {
             params[m[1]] = m[2];
@@ -129,6 +129,11 @@ function getConvertOptions(optionsString) {
     }
     if (params.w || params.h) {
         options.push('-resize', params.w + 'x' + params.h);
+        // Add -size option at beginning to speed up conversion, following
+        // http://sourceforge.net/mailarchive/message.php?msg_id=24752385
+        largerWidth = params.w ? params.w * 2 : '';
+        largerHeight = params.h ? params.h * 2 : '';
+        options.unshift('-size', largerWidth + 'x' + largerHeight);
     }
     options.push('+profile', '*'); // remove Exif/IPTC/etc. metadata to avoid rotation issues
     return options;
@@ -143,8 +148,11 @@ function getTempFilename(options) {
 }
 
 function doConversion(task, callback) {
-    var args = convertArguments.concat(task.rawFile, task.convertOptions, task.convertedFile),
+    var args = task.convertOptions.slice(0), // clone
+        inputFilePosition = args[0] === '-size' ? 2 : 0, // -size goes before input file
         execOptions = {timeout: convertTimeout};
+    args.splice(inputFilePosition, 0, task.rawFile);
+    args = convertArguments.concat(args, task.convertedFile);
     task.times.waiting = Date.now();
     console.log(convertCommand, args.join(' '));
     execFile(convertCommand, args, execOptions, function (err, stdout, stderr) {
