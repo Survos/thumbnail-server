@@ -13,6 +13,7 @@ var fs = require('fs'),
     port = config.port,
     convertTimeout = config.convertTimeout * 1000,
     concurrency = config.concurrency || 1,
+    maxDimension = config.maxDimension,
     convertQueue;
 
 if (config.proxy) {
@@ -103,7 +104,7 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
 });
 
 function getConvertOptions(optionsString) {
-    var params = {w: '', h: ''},
+    var params = {w: maxDimension, h: maxDimension},
         options = [],
         m, largerWidth, largerHeight;
     while (m = optionsString.match(/^([whr])(\d+)|^(c)(\d+x\d+\+\d+\+\d+)/)) {
@@ -133,7 +134,9 @@ function getConvertOptions(optionsString) {
         // http://sourceforge.net/mailarchive/message.php?msg_id=24752385
         largerWidth = params.w ? params.w * 2 : '';
         largerHeight = params.h ? params.h * 2 : '';
-        options.unshift('-size', largerWidth + 'x' + largerHeight);
+        if (largerHeight && largerHeight < maxDimension && largerWidth && largerWidth < maxDimension) {
+            options.unshift('-size', largerWidth + 'x' + largerHeight);
+        }
     }
     options.push('+profile', '*'); // remove Exif/IPTC/etc. metadata to avoid rotation issues
     return options;

@@ -7,5 +7,6 @@
   "user": "www-data",
   "tempDir": "/tmp",
   "proxy": null,
-  "maxAge": 86400
+  "maxAge": 86400,
+  "maxDimension": 2048
 }
