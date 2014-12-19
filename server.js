@@ -32,13 +32,13 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
         times = {start: Date.now()},
         r;
     if (!convertOptions) {
-        res.send(400);
+        res.sendStatus(400);
         return;
     }
     console.log('request headers', req.headers);
     // We're assuming files never change
     if (req.headers['if-none-match'] || req.headers['if-modified-since']) {
-        res.send(304);
+        res.sendStatus(304);
         return;
     }
     r = request(source);
@@ -62,7 +62,7 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
             r.pipe(fs.createWriteStream(rawFile))
                 .on('error', function (err) {
                     console.log('stream error', err);
-                    res.send(500);
+                    res.sendStatus(500);
                     cleanup();
                 })
                 .on('finish', function () {
@@ -78,10 +78,10 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
                         if (err) {
                             if (err == 'timeout') {
                                 console.log('Giving up after waiting ', Date.now() - task.times.start);
-                                res.send(503);
+                                res.sendStatus(503);
                             }
                             else {
-                                res.send(500);
+                                res.sendStatus(500);
                             }
                             cleanup();
                             return;
@@ -104,7 +104,7 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
         }
         else {
             console.log('HTTP error', remoteRes.statusCode);
-            res.send(404);
+            res.sendStatus(404);
         }
         function cleanup() {
             console.log('deleting', rawFile);
@@ -117,7 +117,7 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
     });
     r.on('error', function (err) {
         console.log('request error', err);
-        res.send(500);
+        res.sendStatus(500);
     });
 });
 
