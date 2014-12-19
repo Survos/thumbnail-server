@@ -36,9 +36,10 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
         return;
     }
     console.log('request headers', req.headers);
-    // We're assuming files never change
+    // We're assuming files never change (kluge)
     if (req.headers['if-none-match'] || req.headers['if-modified-since']) {
-        res.sendStatus(304);
+        res.set('Cache-Control', 'max-age=' + config.maxAge) // @todo Handle this better
+            .sendStatus(304);
         return;
     }
     r = request(source);
