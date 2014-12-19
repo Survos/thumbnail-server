@@ -63,7 +63,13 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
                     console.log('%s written', rawFile);
                     convertQueue.push(task, function (err) {
                         if (err) {
-                            res.send(500);
+                            if (err == 'timeout') {
+                                console.log('Giving up after waiting ', Date.now() - task.times.start);
+                                res.send(503);
+                            }
+                            else {
+                                res.send(500);
+                            }
                             cleanup();
                             return;
                         }
@@ -151,6 +157,11 @@ function getTempFilename(options) {
 }
 
 function doConversion(task, callback) {
+    if (task.times.start < Date.now() - 30000) {
+        // It's been waiting too long
+        setImmediate(function () { callback('timeout'); });
+        return;
+    }
     var args = task.convertOptions.slice(0), // clone
         inputFilePosition = args[0] === '-size' ? 2 : 0, // -size goes before input file
         execOptions = {timeout: convertTimeout};
