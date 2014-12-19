@@ -46,7 +46,7 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
             else {
                 sendOptions.maxAge = config.maxAge;
             }
-            // sendfile() wants maxAge in milliseconds, not seconds:
+            // sendFile() wants maxAge in milliseconds, not seconds:
             sendOptions.maxAge *= 1000;
             if (remoteRes.headers['last-modified']) {
                 sendOptions.headers['Last-Modified'] = remoteRes.headers['last-modified'];
@@ -82,7 +82,7 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
                         }
                         times.converted = Date.now();
                         console.log('sending converted file with options', sendOptions);
-                        res.sendfile(convertedFile, sendOptions, function () {
+                        res.sendFile(convertedFile, sendOptions, function () {
                             var prevTime;
                             times.sent = Date.now();
                             _.each(times, function (t, name) {
