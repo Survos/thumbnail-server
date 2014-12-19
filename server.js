@@ -163,7 +163,7 @@ function getTempFilename(options) {
 }
 
 function doConversion(task, callback) {
-    if (task.times.start < Date.now() - 30000) {
+    if (task.times.start < Date.now() - 15000) {
         // It's been waiting too long
         setImmediate(function () { callback('timeout'); });
         return;
