@@ -45,16 +45,15 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
     r = request(source);
     r.on('response', function (remoteRes) {
         var sendOptions = {headers: {}},
-            m, rawFile, convertedFile, stream;
+            m, maxAge, rawFile, convertedFile, stream;
         if (remoteRes.statusCode === 200) {
             if (m = remoteRes.headers['cache-control'] && remoteRes.headers['cache-control'].match(/\bmax-age=(\d+)\b/)) {
-                sendOptions.maxAge = m[1] * 1000;
+                maxAge = m[1] * 1000;
             }
             else {
-                sendOptions.maxAge = config.maxAge;
+                maxAge = config.maxAge;
             }
-            // sendFile() wants maxAge in milliseconds, not seconds:
-            sendOptions.maxAge *= 1000;
+            sendOptions.headers['Cache-Control'] = 'max-age=' + maxAge;
             if (remoteRes.headers['last-modified']) {
                 sendOptions.headers['Last-Modified'] = remoteRes.headers['last-modified'];
             }
