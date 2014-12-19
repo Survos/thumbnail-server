@@ -1,6 +1,7 @@
 var fs = require('fs'),
     execFile = require('child_process').execFile,
     express = require('express'),
+    logger = require('morgan'),
     request = require('request'),
     _ = require('underscore'),
     temp = require('temp'),
@@ -23,7 +24,7 @@ if (config.proxy) {
 
 convertQueue = async.queue(doConversion, concurrency);
 
-app.use(express.logger());
+app.use(logger('combined'));
 app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
     var convertOptions = getConvertOptions(req.params[1]),
         relativePath = req.params[0] + req.params[2],
