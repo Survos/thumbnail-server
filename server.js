@@ -35,6 +35,12 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
         res.send(400);
         return;
     }
+    console.log('request headers', req.headers);
+    // We're assuming files never change
+    if (req.headers['if-none-match'] || req.headers['if-modified-since']) {
+        res.send(304);
+        return;
+    }
     r = request(source);
     r.on('response', function (remoteRes) {
         var sendOptions = {headers: {}},
