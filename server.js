@@ -37,13 +37,19 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
     }
     r = request(source);
     r.on('response', function (remoteRes) {
-        var maxAge, m, rawFile, convertedFile, stream;
+        var sendOptions = {headers: {}},
+            m, rawFile, convertedFile, stream;
         if (remoteRes.statusCode === 200) {
             if (m = remoteRes.headers['cache-control'] && remoteRes.headers['cache-control'].match(/\bmax-age=(\d+)\b/)) {
-                maxAge = m[1];
+                sendOptions.maxAge = m[1] * 1000;
             }
             else {
-                maxAge = config.maxAge;
+                sendOptions.maxAge = config.maxAge;
+            }
+            // sendfile() wants maxAge in milliseconds, not seconds:
+            sendOptions.maxAge *= 1000;
+            if (remoteRes.headers['last-modified']) {
+                sendOptions.headers['Last-Modified'] = remoteRes.headers['last-modified'];
             }
             rawFile = getTempFilename('raw');
             convertedFile = getTempFilename('converted');
@@ -75,9 +81,8 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
                             return;
                         }
                         times.converted = Date.now();
-                        console.log('sending converted file with max age', maxAge);
-                        // sendfile() wants maxAge in milliseconds, not seconds:
-                        res.sendfile(convertedFile, {maxAge: maxAge * 1000}, function () {
+                        console.log('sending converted file with options', sendOptions);
+                        res.sendfile(convertedFile, sendOptions, function () {
                             var prevTime;
                             times.sent = Date.now();
                             _.each(times, function (t, name) {
