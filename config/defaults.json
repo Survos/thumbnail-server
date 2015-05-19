@@ -8,5 +8,5 @@
   "tempDir": "/tmp",
   "proxy": null,
   "maxAge": 86400,
-  "maxDimension": 2048
+  "maxDimension": 10000
 }

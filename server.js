@@ -122,7 +122,7 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
 });
 
 function getConvertOptions(optionsString) {
-    var params = {w: maxDimension, h: maxDimension},
+    var params = {w: '', h: ''},
         options = [],
         m, largerWidth, largerHeight;
     while (m = optionsString.match(/^([whr])(\d+)|^(c)(\d+x\d+\+\d+\+\d+)/)) {
@@ -147,6 +147,12 @@ function getConvertOptions(optionsString) {
         options.push('-crop', params.c);
     }
     if (params.w || params.h) {
+        if (params.w && params.w > maxDimension) {
+            params.w = maxDimension;
+        }
+        if (params.h && params.h > maxDimension) {
+            params.h = maxDimension;
+        }
         options.push('-resize', params.w + 'x' + params.h);
         // Add -size option at beginning to speed up conversion, following
         // http://sourceforge.net/mailarchive/message.php?msg_id=24752385
