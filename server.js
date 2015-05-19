@@ -122,42 +122,47 @@ app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
 });
 
 function getConvertOptions(optionsString) {
-    var params = {w: '', h: ''},
+    var width = '',
+        height = '',
         options = [],
-        m, largerWidth, largerHeight;
-    while (m = optionsString.match(/^([whr])(\d+)|^(c)(\d+x\d+\+\d+\+\d+)/)) {
+        m, name, value, largerWidth, largerHeight;
+    while (m = optionsString.match(/^([whr])(\d+)|^c(\d+x\d+\+\d+\+\d+)/)) {
         if (m[1]) {
-            params[m[1]] = m[2];
+            name = m[1];
+            value = +m[2];
+            switch (name) {
+                case 'r':
+                    if (value) { // Don't bother with rotate if 0
+                        options.push('-rotate', value);
+                    }
+                    break;
+                case 'w':
+                    width = value;
+                    break;
+                case 'h':
+                    height = value;
+            }
         }
         else {
-            params[m[3]] = m[4];
+            options.push('-crop', m[3]);
         }
         optionsString = optionsString.substr(m[0].length);
     }
     if (optionsString) {
         return null;
     }
-    // Order of handling is important here
-    if (params.r) {
-        if (+params.r) { // Don't bother with rotate if 0
-            options.push('-rotate', params.r);
+    if (width || height) {
+        if (width && width > maxDimension) {
+            width = maxDimension;
         }
-    }
-    if (params.c) {
-        options.push('-crop', params.c);
-    }
-    if (params.w || params.h) {
-        if (params.w && params.w > maxDimension) {
-            params.w = maxDimension;
+        if (height && height > maxDimension) {
+            height = maxDimension;
         }
-        if (params.h && params.h > maxDimension) {
-            params.h = maxDimension;
-        }
-        options.push('-resize', params.w + 'x' + params.h);
+        options.push('-resize', width + 'x' + height);
         // Add -size option at beginning to speed up conversion, following
         // http://sourceforge.net/mailarchive/message.php?msg_id=24752385
-        largerWidth = params.w ? params.w * 2 : '';
-        largerHeight = params.h ? params.h * 2 : '';
+        largerWidth = width ? width * 2 : '';
+        largerHeight = height ? height * 2 : '';
         if (largerHeight && largerHeight < maxDimension && largerWidth && largerWidth < maxDimension) {
             options.unshift('-size', largerWidth + 'x' + largerHeight);
         }
