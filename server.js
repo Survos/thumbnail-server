@@ -25,7 +25,7 @@ if (config.proxy) {
 convertQueue = async.queue(doConversion, concurrency);
 
 app.use(logger('combined'));
-app.get(/^(\/.+)\.([^.\/]+)(\.jpe?g)$/i, function (req, res) {
+app.get(/^(\/.+)\.([^.\/]+)(\.(?:jpe?g|png))$/i, function (req, res) {
     var convertOptions = getConvertOptions(req.params[1]),
         relativePath = req.params[0] + req.params[2],
         source = basePath + relativePath,
