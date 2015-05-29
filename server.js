@@ -6,6 +6,7 @@ var fs = require('fs'),
     _ = require('underscore'),
     temp = require('temp'),
     async = require('async'),
+    mime = require('mime-types'),
     config = require('./config'),
     app = express(),
     basePath = config.basePath,
@@ -15,6 +16,11 @@ var fs = require('fs'),
     convertTimeout = config.convertTimeout * 1000,
     concurrency = config.concurrency || 1,
     maxDimension = config.maxDimension,
+    allowedTypes = [
+//        'application/pdf',
+        'image/jpeg',
+        'image/png'
+    ],
     convertQueue;
 
 if (config.proxy) {
@@ -25,13 +31,13 @@ if (config.proxy) {
 convertQueue = async.queue(doConversion, concurrency);
 
 app.use(logger('combined'));
-app.get(/^(\/.+)\.([^.\/]+)(\.(?:jpe?g|png))$/i, function (req, res) {
+app.get(/^(\/.+)\.([^.\/]+)(\.[^.\/]+)$/i, function (req, res) {
     var convertOptions = getConvertOptions(req.params[1]),
-        relativePath = req.params[0] + req.params[2],
-        source = basePath + relativePath,
+        source = basePath + req.params[0] + req.params[2],
+        mimeType = mime.lookup(req.params[2]),
         times = {start: Date.now()},
         r;
-    if (!convertOptions) {
+    if (!convertOptions || allowedTypes.indexOf(mimeType) == -1) {
         res.sendStatus(400);
         return;
     }
@@ -45,6 +51,7 @@ app.get(/^(\/.+)\.([^.\/]+)(\.(?:jpe?g|png))$/i, function (req, res) {
     r = request(source);
     r.on('response', function (remoteRes) {
         var sendOptions = {headers: {}},
+            fileExtension = mime.extension(mimeType),
             m, maxAge, rawFile, convertedFile, stream;
         if (remoteRes.statusCode === 200) {
             if (m = remoteRes.headers['cache-control'] && remoteRes.headers['cache-control'].match(/\bmax-age=(\d+)\b/)) {
@@ -57,8 +64,8 @@ app.get(/^(\/.+)\.([^.\/]+)(\.(?:jpe?g|png))$/i, function (req, res) {
             if (remoteRes.headers['last-modified']) {
                 sendOptions.headers['Last-Modified'] = remoteRes.headers['last-modified'];
             }
-            rawFile = getTempFilename('raw');
-            convertedFile = getTempFilename('converted');
+            rawFile = getTempFilename('raw', fileExtension);
+            convertedFile = getTempFilename('converted', fileExtension);
             r.pipe(fs.createWriteStream(rawFile))
                 .on('error', function (err) {
                     console.log('stream error', err);
@@ -171,12 +178,12 @@ function getConvertOptions(optionsString) {
     return options;
 }
 
-function getTempFilename(options) {
-    if (typeof options == 'string') {
-        options = {prefix: 'thumbnail-' + options + '-'};
-    }
-    _.defaults(options, {dir: config.tempDir, suffix: '.jpg'});
-    return temp.path(options);
+function getTempFilename(namePart, fileExtension) {
+    return temp.path({
+        prefix: 'thumbnail-' + namePart + '-',
+        dir: config.tempDir,
+        suffix: '.' + fileExtension
+    });
 }
 
 function doConversion(task, callback) {
