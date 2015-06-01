@@ -17,7 +17,7 @@ var fs = require('fs'),
     concurrency = config.concurrency || 1,
     maxDimension = config.maxDimension,
     allowedTypes = [
-//        'application/pdf',
+        'application/pdf',
         'image/jpeg',
         'image/png'
     ],
@@ -31,13 +31,14 @@ if (config.proxy) {
 convertQueue = async.queue(doConversion, concurrency);
 
 app.use(logger('combined'));
-app.get(/^(\/.+)\.([^.\/]+)(\.[^.\/]+)$/i, function (req, res) {
+app.get(/^(\/.+?)\.([^.\/]+)(\.\w+)(\.\w+)?$/i, function (req, res) {
     var convertOptions = getConvertOptions(req.params[1]),
         source = basePath + req.params[0] + req.params[2],
-        mimeType = mime.lookup(req.params[2]),
+        originalMimeType = mime.lookup(req.params[2]),
+        mimeType = req.params[3] ? mime.lookup(req.params[3]) : originalMimeType,
         times = {start: Date.now()},
         r;
-    if (!convertOptions || allowedTypes.indexOf(mimeType) == -1) {
+    if (!convertOptions || allowedTypes.indexOf(mimeType) == -1 || allowedTypes.indexOf(originalMimeType) == -1) {
         res.sendStatus(400);
         return;
     }
@@ -51,7 +52,6 @@ app.get(/^(\/.+)\.([^.\/]+)(\.[^.\/]+)$/i, function (req, res) {
     r = request(source);
     r.on('response', function (remoteRes) {
         var sendOptions = {headers: {}},
-            fileExtension = mime.extension(mimeType),
             m, maxAge, rawFile, convertedFile, stream;
         if (remoteRes.statusCode === 200) {
             if (m = remoteRes.headers['cache-control'] && remoteRes.headers['cache-control'].match(/\bmax-age=(\d+)\b/)) {
@@ -64,8 +64,8 @@ app.get(/^(\/.+)\.([^.\/]+)(\.[^.\/]+)$/i, function (req, res) {
             if (remoteRes.headers['last-modified']) {
                 sendOptions.headers['Last-Modified'] = remoteRes.headers['last-modified'];
             }
-            rawFile = getTempFilename('raw', fileExtension);
-            convertedFile = getTempFilename('converted', fileExtension);
+            rawFile = getTempFilename('raw', mime.extension(originalMimeType));
+            convertedFile = getTempFilename('converted', mime.extension(mimeType));
             r.pipe(fs.createWriteStream(rawFile))
                 .on('error', function (err) {
                     console.log('stream error', err);
@@ -132,12 +132,15 @@ function getConvertOptions(optionsString) {
     var width = '',
         height = '',
         options = [],
-        m, name, value, largerWidth, largerHeight;
-    while (m = optionsString.match(/^([whr])(\d+)|^c(\d+x\d+\+\d+\+\d+)/)) {
+        m, name, value, page, largerWidth, largerHeight;
+    while (m = optionsString.match(/^([pwhr])(\d+)|^c(\d+x\d+\+\d+\+\d+)/)) {
         if (m[1]) {
             name = m[1];
             value = +m[2];
             switch (name) {
+                case 'p':
+                    page = value;
+                    break;
                 case 'r':
                     if (value) { // Don't bother with rotate if 0
                         options.push('-rotate', value);
@@ -175,6 +178,9 @@ function getConvertOptions(optionsString) {
         }
     }
     options.push('+profile', '*'); // remove Exif/IPTC/etc. metadata to avoid rotation issues
+    if (page) {
+        options.unshift('page', page); // fake option
+    }
     return options;
 }
 
@@ -194,8 +200,13 @@ function doConversion(task, callback) {
     }
     var args = task.convertOptions.slice(0), // clone
         inputFilePosition = args[0] === '-size' ? 2 : 0, // -size goes before input file
-        execOptions = {timeout: convertTimeout};
-    args.splice(inputFilePosition, 0, task.rawFile);
+        execOptions = {timeout: convertTimeout},
+        rawFile = task.rawFile;
+    if (args[0] == 'page') {
+        rawFile += '[' + (args[1] - 1) + ']'; // add page number (0-based)
+        args.splice(0, 2); // remove 'page' and page number
+    }
+    args.splice(inputFilePosition, 0, rawFile);
     args = convertArguments.concat(args, task.convertedFile);
     task.times.waiting = Date.now();
     console.log(convertCommand, args.join(' '));
