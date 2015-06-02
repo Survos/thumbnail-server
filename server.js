@@ -31,7 +31,7 @@ if (config.proxy) {
 convertQueue = async.queue(doConversion, concurrency);
 
 app.use(logger('combined'));
-app.get(/^(\/.+?)\.([^.\/]+)(\.\w+)(\.\w+)?$/i, function (req, res) {
+app.get(/^(\/.+?)\.([^.\/]+)(\.[a-z]{3,4})(\.[a-z]{3,4})?$/i, function (req, res) {
     var convertOptions = getConvertOptions(req.params[1]),
         source = basePath + req.params[0] + req.params[2],
         originalMimeType = mime.lookup(req.params[2]),
