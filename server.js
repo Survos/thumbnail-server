@@ -207,6 +207,10 @@ function doConversion(task, callback) {
         args.splice(0, 2); // remove 'page' and page number
     }
     args.splice(inputFilePosition, 0, rawFile);
+    // @todo Need less messy way to test whether converting PDF to something else
+    if (/\.pdf(?:\[\d+\])?$/.test(rawFile) && !/\.pdf/.test(task.convertedFile)) {
+        args.unshift('-density', 300);
+    }
     args = convertArguments.concat(args, task.convertedFile);
     task.times.waiting = Date.now();
     console.log(convertCommand, args.join(' '));
