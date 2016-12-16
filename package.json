@@ -11,7 +11,7 @@
     "url": "https://github.com/Survos/thumbnail-server.git"
   },
   "author": "Keith Ivey <keith@iveys.org>",
-  "license": "BSD",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/Survos/thumbnail-server/issues"
   },
