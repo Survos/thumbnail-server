@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var fs = require('fs'),
     execFile = require('child_process').execFile,
     express = require('express'),

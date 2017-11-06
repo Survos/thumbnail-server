@@ -1,6 +1,7 @@
 {
   "name": "thumbnail-server",
-  "version": "0.0.2",
+  "version": "0.0.3",
+  "bin": "./server.js",
   "description": "serve resized (or otherwise converted) images",
   "main": "server.js",
   "scripts": {
