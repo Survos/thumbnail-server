@@ -1,6 +1,6 @@
 {
   "name": "thumbnail-server",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "bin": "./server.js",
   "description": "serve resized (or otherwise converted) images",
   "main": "server.js",
@@ -24,6 +24,7 @@
     "nconf": "^0.8.4",
     "request": "^2.79.0",
     "temp": "^0.8.3",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "underscore.string": "^3.3.4"
   }
 }
